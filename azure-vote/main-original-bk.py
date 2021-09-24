@@ -28,36 +28,41 @@ stats = stats_module.stats
 view_manager = stats.view_manager
 
 # Logging
+# logger = # TODO: Setup logger
 config_integration.trace_integrations(['logging'])
 config_integration.trace_integrations(['requests'])
 logger = logging.getLogger(__name__)
 
-handler = AzureLogHandler(connection_string='InstrumentationKey=11ff0a40-5f01-4edb-8dbd-c1c1f2656d3b')
+handler = AzureLogHandler(connection_string='InstrumentationKey=a1039941-d7cc-45d5-9c58-5ba0a13cb85e')
 handler.setFormatter(logging.Formatter('%(traceId)s %(spanId)s %(message)s'))
 logger.addHandler(handler)
 
-logger.addHandler(AzureEventHandler(connection_string='InstrumentationKey=11ff0a40-5f01-4edb-8dbd-c1c1f2656d3b'))
+logger.addHandler(AzureEventHandler(connection_string='InstrumentationKey=a1039941-d7cc-45d5-9c58-5ba0a13cb85e'))
 logger.setLevel(logging.INFO)
 
 # Metrics
+# exporter = # TODO: Setup exporter
 exporter = metrics_exporter.new_metrics_exporter(
-  enable_standard_metrics=True,
-  connection_string='InstrumentationKey=11ff0a40-5f01-4edb-8dbd-c1c1f2656d3b')
+    enable_standard_metrics=True,
+    connection_string='InstrumentationKey=a1039941-d7cc-45d5-9c58-5ba0a13cb85e')
 
 view_manager.register_exporter(exporter)
 
 # Tracing
+# tracer = # TODO: Setup tracer
 tracer = Tracer(
     exporter=AzureExporter(
-        connection_string='InstrumentationKey=11ff0a40-5f01-4edb-8dbd-c1c1f2656d3b'),
+        connection_string='InstrumentationKey=a1039941-d7cc-45d5-9c58-5ba0a13cb85e'),
     sampler=ProbabilitySampler(1.0),
 )
+
 app = Flask(__name__)
 
 # Requests
+# middleware = # TODO: Setup flask middleware
 middleware = FlaskMiddleware(
     app,
-    exporter=AzureExporter(connection_string="InstrumentationKey=11ff0a40-5f01-4edb-8dbd-c1c1f2656d3b"),
+    exporter=AzureExporter(connection_string="InstrumentationKey=a1039941-d7cc-45d5-9c58-5ba0a13cb85e"),
     sampler=ProbabilitySampler(rate=1.0)
 )
 
@@ -79,10 +84,12 @@ if ("TITLE" in os.environ and os.environ['TITLE']):
 else:
     title = app.config['TITLE']
 
-# Redis Connection to a local server running on the same machine where the current FLask app is running. 
+# Redis Connection
 r = redis.Redis()
 
-"""redis_server = os.environ['REDIS']
+# Redis Connection for multi-container (AKS) deployment
+# Redis configuration
+""" redis_server = os.environ['REDIS']
 
 # Redis Connection to another container
 try:
@@ -94,8 +101,8 @@ try:
         r = redis.Redis(redis_server)
     r.ping()
 except redis.ConnectionError:
-    exit('Failed to connect to Redis, terminating.')
-"""
+    exit('Failed to connect to Redis, terminating.') """
+
 # Change title to host name to demo NLB
 if app.config['SHOWHOST'] == "true":
     title = socket.gethostname()
@@ -157,7 +164,7 @@ def index():
             vote2 = r.get(button2).decode('utf-8')
             properties = {'custom_dimensions': {'Dogs Vote': vote2}}
             # TODO: use logger object to log dog vote
-            logger.info('Dogs Vote', extra=properties)            
+            logger.info('Dogs Vote', extra=properties)
 
             # Return results
             return render_template("index.html", value1=int(vote1), value2=int(vote2), button1=button1, button2=button2, title=title)
@@ -167,4 +174,3 @@ if __name__ == "__main__":
     # app.run() # local
     # uncomment the line below before deployment to VMSS
     app.run(host='0.0.0.0', threaded=True, debug=True) # remote
-    #app.run(host='localhost', port=8080, threaded=True, debug=True)
